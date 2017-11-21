@@ -130,18 +130,16 @@ let spinner = new Spinner('[%1$s] (%3$s/%4$s) %2$s %5$s');
 
 console.log('Analyzing files... ');
 files_list.forEach( function(fn) {
-    FS.appendFileSync(args.errfile, fn + '\n');
-
     total_files++;
 
-    if (!/\.[J|j][P|p][G|g]$/.exec(fn)) {
-        spinner.tick(fn, total_files, files_list_length, 'not a JPG file\n');
+    if (!/\.[J|j][P|p][E|e]?[G|g]$/.exec(fn)) {
+        spinner.tick(fn, total_files, files_list_length, 'not a JPG file');
     } else {
         try {
             let image = new ExifImage({ image: fn });
             // Fix MEMORY overflow:
             // in ExifImage.prototype.extractExifEntry after entry{} definition add:
-            // if (entry.components > 10000) { throw new Error('Errors in EXIF data.'); return false; }
+            // if (entry.components > 1000000) { throw new Error('Invalid `entry.component` count in EXIF data.'); return false; };
 
             if (image) {
                 let meta = image.exifData;
@@ -156,7 +154,7 @@ files_list.forEach( function(fn) {
             }
             image = null;
         } catch (error) {
-            // FS.appendFileSync(args.errfile, fn + ' ' + error.message + '\n');
+            FS.appendFileSync(args.errfile, fn + ' ' + error.message + '\n');
             // error.message
             // console.log();
             // spinner.tick(fn, total_files + '  ' + error.message);
