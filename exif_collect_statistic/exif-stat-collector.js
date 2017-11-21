@@ -10,11 +10,7 @@ const Spinner = require('./kw.spinner').Spinner;
 const sprintf = require('./kw.sprintf').sprintf;
 
 const walkSync = (d) => FS.statSync(d).isDirectory() ? FS.readdirSync(d).map(f => walkSync(PATH.join(d, f))) : d;
-/*
-const walkSync = function(d) {
-    FS.statSync(d).isDirectory ? FS.readdirSync(d).map(function(f) {walkSync(PATH.join(d, f))} ) : d;
-};
-*/
+/* const walkSync = function(d) { FS.statSync(d).isDirectory ? FS.readdirSync(d).map(function(f) {walkSync(PATH.join(d, f))} ) : d; }; */
 
 var isEmpty = function(obj) {
     return Object.keys(obj).length === 0;
@@ -68,13 +64,15 @@ var process_argv = function () {
     }
     let argv_path = process.argv[2];
 
-    if ((argv_path.slice(-1) == '/') || (argv_path.slice(-1) == '\\')) {
+    /*if ((argv_path.slice(-1) == '/') || (argv_path.slice(-1) == '\\')) {
         argv_path = argv_path.substring(0, argv_path.length - 1);
-    }
+    }*/
 
+    let ts = Date.now();
     return {
         input_path: argv_path,
-        logfile: process.argv[3] || Date.now() + '.csv'
+        logfile: process.argv[3] || ts + '.csv',
+        errfile: ts + '.log'
     };
 }
 
@@ -82,8 +80,8 @@ String.prototype.paddingLeft = function (paddingValue) {
     return String(paddingValue + this).slice(-paddingValue.length);
 };
 
-const csv_head = "Maker;Model;Software;GPS LatLonAlt;Image Direction\r\n";
-const csv_mask = "%s;%s;%s;%s/%s/%s;%s\r\n";
+const csv_head = "Maker;Model;Software;GPS LatLonAlt;Image Direction\n";
+const csv_mask = "%s;%s;%s;%s/%s/%s;%s\n";
 
 var format_log_line = function(line) {
     return sprintf(csv_mask, line.maker, line.model, line.software, line.gps_lat, line.gps_lon, line.gps_alt, line.gps_dir);
@@ -103,50 +101,69 @@ var compose_data_from_exif = function(meta) {
     return entry;
 }
 
+var flatten_array = function(arr) {
+    return arr.reduce(function (flat, toFlatten) {
+        return flat.concat(Array.isArray(toFlatten) ? flatten_array(toFlatten) : toFlatten);
+    }, []);
+};
+
 // ---- MAIN ----
 let args = process_argv();
 let files_path = args.input_path;
 
 console.log('Reading directory structure... ');
-let files_list = [].concat.apply([], walkSync( files_path )); // flatten array of files in subdirs
-console.log('Ok. Found average ' + files_list.length + ' entries.');
+let files_list = walkSync( files_path );
+    files_list = flatten_array(files_list);
+
+let files_list_length = files_list.length;
+
+console.log('Ok. Found average ' + files_list_length + ' entries.');
 
 let total_files = 0;
 let valid_files = 0;
 
 let log = [];
 
-let spinner = new Spinner('[%1$s] : %2$s , total files: %3$s ');
-spinner.setSpinnerString("|/-\\");
+// let spinner = new Spinner('[%1$s] : %2$s , total files: %3$s ');
+let spinner = new Spinner('[%1$s] (%3$s/%4$s) %2$s %5$s');
+    spinner.setSpinnerString("|/-\\");
 
 console.log('Analyzing files... ');
 files_list.forEach( function(fn) {
-    if (!/\.[J|j][P|p][G|g]$/.exec(fn)) { return }
+    FS.appendFileSync(args.errfile, fn + '\n');
 
     total_files++;
 
-    try {
-        let image = new ExifImage({ image: fn });
-        // Fix MEMORY overflow:
-        // in ExifImage.prototype.extractExifEntry after entry{} definition add:
-        // if (entry.components > 10000) { throw new Error('Errors in EXIF data.'); return false; }
+    if (!/\.[J|j][P|p][G|g]$/.exec(fn)) {
+        spinner.tick(fn, total_files, files_list_length, 'not a JPG file\n');
+    } else {
+        try {
+            let image = new ExifImage({ image: fn });
+            // Fix MEMORY overflow:
+            // in ExifImage.prototype.extractExifEntry after entry{} definition add:
+            // if (entry.components > 10000) { throw new Error('Errors in EXIF data.'); return false; }
 
-        if (image) {
-            let meta = image.exifData;
+            if (image) {
+                let meta = image.exifData;
 
-            let entry = compose_data_from_exif(meta);
+                let entry = compose_data_from_exif(meta);
 
-            log.push(entry);
+                log.push(entry);
 
-            spinner.tick(fn, total_files);
-            valid_files++;
+                // spinner.tick(fn, total_files);
+                spinner.tick(fn, total_files, files_list_length, ' ...');
+                valid_files++;
+            }
+            image = null;
+        } catch (error) {
+            // FS.appendFileSync(args.errfile, fn + ' ' + error.message + '\n');
+            // error.message
+            // console.log();
+            // spinner.tick(fn, total_files + '  ' + error.message);
+            // spinner.tick(fn, total_files);
         }
-        image = null;
-    } catch (error) {
-        // error.message
-        spinner.tick(fn, total_files + '  ' + error.message + '\n');
-        // spinner.tick(fn, valid_files);
     }
+
 });
 spinner.stop();
 
