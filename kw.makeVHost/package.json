@@ -1,0 +1,15 @@
+{
+    "name": "KW Virtual hosts creator",
+    "description": "KW Virtual hosts creator",
+    "version": "0.1",
+    "maintainers": [
+        {
+            "name": "Karel Wintersky",
+            "email": "karel.wintersky@gmail.com",
+            "web": "http://karel.wintersky.ru"
+        }
+    ],
+    "dependencies": {
+        "colors": "~1.1.2"
+    }
+}
