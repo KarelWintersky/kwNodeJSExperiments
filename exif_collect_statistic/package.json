@@ -1,0 +1,19 @@
+{
+  "name": "exifCollectStats",
+  "description": "Get EXIF data and collect EXIF stats for multiply files",
+  "version": "0.1",
+  "readme": "README.md",
+  "keywords": [
+    "EXIF GPSCoords"
+  ],
+  "maintainers": [
+    {
+      "name": "Karel Wintersky",
+      "email": "karel.wintersky@gmail.com"
+    }
+  ],
+  "dependencies": {
+    "kinda-exif": "^0.4.1",
+    "sprintf-js": "^1.1.1"
+  }
+}
