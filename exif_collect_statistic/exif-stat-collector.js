@@ -84,15 +84,15 @@ const csv_head = "Maker;Model;Software;GPS LatLonAlt;Image Direction\n";
 const csv_mask = "%s;%s;%s;%s/%s/%s;%s\n";
 
 var format_log_line = function(line) {
-    return sprintf(csv_mask, line.maker, line.model, line.software, line.gps_lat, line.gps_lon, line.gps_alt, line.gps_dir);
+    return sprintf(csv_mask, line.maker.trim(), line.model.trim(), line.software.trim(), line.gps_lat, line.gps_lon, line.gps_alt, line.gps_dir);
 }
 
 var compose_data_from_exif = function(meta) {
     let gps = exif_parse_gps(meta);
     let entry = {
-        'maker'     : meta.image.Make       || 'n/a',
-        'model'     : meta.image.Model      || 'n/a',
-        'software'  : meta.image.Software   || 'n/a',
+        'maker'     : meta.image.Make || 'n/a',
+        'model'     : meta.image.Model || 'n/a',
+        'software'  : meta.image.Software || 'n/a',
         'gps_lat'   : gps.lat,
         'gps_lon'   : gps.lon,
         'gps_alt'   : gps.alt,
