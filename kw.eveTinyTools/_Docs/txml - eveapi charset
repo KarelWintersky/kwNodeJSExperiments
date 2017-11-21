@@ -1,0 +1,9 @@
+var tXml 	= require('txml'); // https://www.npmjs.com/package/txml, npm install txml
+
+var getCharacterId = function(data) {
+	var eveapi = data[0].children[0]; 
+	// var charRow = eveapi['children'][1]['children'][0];
+	var character = eveapi['children'][1]['children'][0]['children'][0]['attributes'];
+	var charId = character['characterID'];
+	return charId;
+}
