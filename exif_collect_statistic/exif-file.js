@@ -98,6 +98,7 @@ try {
         let entry = compose_data_from_exif(meta);
         // log.push(entry);
         console.log(meta);
+        console.log(entry);
     }
     image = null;
 } catch (error) {
